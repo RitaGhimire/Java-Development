@@ -1,0 +1,312 @@
+// OOP 260 - Spring 2024
+// Authors First and Last Names
+// ,Preshika Basnet,Prashis Poudel ,Rita Ghimire
+// Work Completed March 5, 2024,
+// BattleShip Game- Mid-term Group Project (Assignment-8)
+// Dr. Nicholas Caporusso
+
+// Import necessary modules
+import java.util.Random;
+import java.util.Scanner;
+
+public class Main {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    static final int coord = 10;                                     // Here are list of arrays that assigns the value of 10*10
+
+    static final char[][] playerCoords = new char[coord][coord];     //This assigns value for player's coordinates
+    static final char[][] compCoords = new char[coord][coord];       // This assigns for  computer coordinates and computer's ship placement respectively
+    static final char[][] compShip = new char[coord][coord];
+    static final int[] shipLength = {5,4,3,3,2};                     // This is the total number of  boat placement
+    static final String[] shipNames = {"Carrier", "Battleship", "Cruiser", "Submarine", "Destroyer"}; // These are the name for the boat placement in the above number's order
+    static int playShipCount = 0;                                    //This is for continuing to add  if player's ship is hit by computer
+    static int hitShipsComp = 0;                                     //This is for continuing to add if computer's ship is hit by human
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // This is printing the board in 10 by 10 format
+    //This method is used to initialize a game board by filling it with the character of '~' (what we call WATER)
+    public static void Board(char[][] coordinates) {
+        for(int i = 0; i<coord; i++){
+            for (int j =0; j<coord; j++){
+                coordinates[i][j] = '~';
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+// Here player is trying to load their boats starting from 5 ending in 2
+//It is checking if the surrounding area is valid for not, if the place has already been taken or not
+    public static void playShip(){
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Your goal is to place your own ships given in the table above." );
+        System.out.println("Now you can place your ships on the board to get goinggggggg!!!!");
+        System.out.println("These are the names of the ship that are available to you");
+
+        int a = 0, b = 0;
+        System.out.println("1. Carrier- 5");
+        System.out.println("2. Battleship- 4");
+        System.out.println("3. Cruiser- 3");
+        System.out.println("4. Submarine- 3");
+        System.out.println("5. Destroyer- 2");
+        System.out.println(" " );
+        for (int i=0; i<shipLength.length; i++){     //Loop through each ship player has to place
+            boolean playShip = false;
+            while(!playShip){                        //This is a loop that keeps asking for coordinates until a valid coordinate is entered and placed in the game board
+                try{
+                    System.out.println("Enter X and Y coordinates for your " + shipNames[i] + " in numerical pattern(1 - 9): ");
+                    String numLetter = scanner.nextLine();
+                    String [] chars = numLetter.split(" ");
+
+                    if (chars.length != 2){
+                        throw new IllegalArgumentException("Invalid Input Format. Try again.");
+                    }
+                    a = (Integer.parseInt(chars[0])) - 1;
+                    b = (Integer.parseInt(chars[1])) - 1;
+
+                    if (a < 0 || a >= 9 || b < 0 || b >= 9){
+                        throw new IllegalArgumentException("Invalid Input Format. Please enter your number between 1 and 9");
+                    }
+
+                    if (isAreaValid(playerCoords, a, b, shipLength[i],true)) {                   // Check if the chosen area on the board is valid for placing the ship
+                        shipPlacement(playerCoords, a, b, shipLength[i], true);                  // If valid, place the ship on the board
+                        playShip= true;             // Set the play ship to true indicating ship placement was successful
+                        playShipCount++;            // Increment the count of ships placed
+                    }else{
+                        System.out.println("The coordinates you placed are invalid.Please try again!");     // This takes place when the entered coordinated are inValid, prompting the user to try again by printing the message
+                    }
+
+
+                }catch(NumberFormatException e){
+                    System.out.println("Invalid Input Format. Please enter only numbers");      // Handle the case where the user enters something that's not a number
+                }catch (IllegalArgumentException e){
+                    System.out.println(e.getMessage());                                         // Handle the case where the entered coordinates are out of bounds
+                }
+            }
+
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Here computer is trying to load their boats starting from 5 ending in 2
+    //It is checking if the surrounding area is valid for not, if the place has already been taken or not
+    public static void computerShip(){
+        Random random = new Random();
+        System.out.println("!Hang ON! Computer is placing ships.......");
+        System.out.println("1!!!!\n2!!!!\n3!!!!");
+
+        for(int i = 0 ; i <shipLength.length ;i++){     // Loop through each ship the computer need to place
+            boolean shipPlaced = false;
+            while(!shipPlaced){                         // loop continued until the ship has been successfully placed in the game board
+                int xCords = random.nextInt(coord);     // The Computer generates random X coordinate
+                int yCords = random.nextInt(coord);     // The Computer generates random Y coordinate
+                boolean checkVertical = random.nextBoolean(); // The boolean is randomly checking whether the ship must be placed vertically or horizontally
+                if(isAreaValid(compShip,xCords,yCords,shipLength[i],checkVertical)){    // Check if the area on the computer's board is valid or not
+                    shipPlacement(compShip,xCords,yCords,shipLength[i],checkVertical);
+                    shipPlaced = true;
+
+                }
+                // There is no else condition as this loop continues if the chosen area is invalid until a valid placement is made
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    //The # shows where the player's boat has been placed
+    // Here player is trying to hit on the boat's of the computer
+    // If it hits it is assigned by X if it misses it is assigned by *
+    public static void playerTurn() {
+        Scanner scanner = new Scanner(System.in);
+        int a, b;
+        boolean isThereShip = false;
+
+        while (!isThereShip) {
+
+            System.out.println("\nPlayer's turn. Enter X and Y coordinates to fire:");
+            String numLetter = scanner.nextLine().trim();
+            String[] chars = numLetter.split("\\s+");
+            try {
+                if (chars.length != 2) {
+                    throw new IllegalArgumentException("Invalid Input Format. Try again.");
+                }
+
+                a = Integer.parseInt(chars[0]) - 1;
+                b = Integer.parseInt(chars[1]) - 1;
+
+                if (!areCoordinatesValid(a, b)) {
+                    throw new IllegalArgumentException("Invalid Input Format. Please enter your number between 1 and 9.");
+                }
+
+                System.out.println("Board before your turn");
+                printingBoard(playerCoords, compCoords);
+
+                if (compShip[a][b] == '#') {
+                    System.out.println("Hit!");
+                    compCoords[a][b] = 'X';
+                    compShip[a][b] = 'X';
+                    isThereShip = true;
+                    hitShipsComp++;
+                } else {
+                    System.out.println("You Missedddd.");
+                    compCoords[a][b] = '*';
+                    isThereShip = true;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid Input Format. Please enter only numbers.");
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+        private static boolean areCoordinatesValid(int x, int y) {
+        return x >= 0 && x < coord && y >= 0 && y < coord;
+        }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Here computer is trying to hit on the boat's of the player
+    // If it hits it is assigned by X if it misses it is assigned by *
+    public static void computersTurn() {
+        Random random = new Random();     // Computer uses random class to generate its move
+        boolean isThereShip = false;
+        while (!isThereShip) {          // This loop will continue until the computer makes a valid move
+            int a = random.nextInt(coord);      // Generate random a coordinate
+            int b = random.nextInt(coord);      // Generate random b coordinate
+
+            if (playerCoords[a][b] != 'X' && playerCoords[a][b] != '*') {
+                if (playerCoords[a][b] == '#') {
+                    playerCoords[a][b] = 'X';       // Show 'X' to mark the spot to show it's been hit.
+                    playShipCount--;                // Decrement the count of hidden ships after there has been hit for number of ships computer needs to find
+                    System.out.println("Computer hit at (" + (a + 1) + "," + (b + 1) + ")");    // Print that the computer has found a ship!
+                } else {      //  No hidden ship at this spot. The computer missed its target.
+                    playerCoords[a][b] = '*';       // Show '*' to mark this spot to show it's been found.
+                    System.out.println("Computer missed at (" + (a + 1) + "," + (b + 1) + ")"); // Print the computer missed finding a ship at this spot.
+                }
+                isThereShip = true;   // This stop searching for a new spot as the computer made its move, and whether it found something or not and so it returns true
+            }
+            // Loop continues and computer will keep looking for a new spot until it finds one.
+        }
+    }
+
+    // It is end of the computer's turn. It randomly explored a spot on the player's board
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // This is general method place the ship properly either VERTICALLY or HORIZONTALLY
+    // checkVertical is a boolean that determine if the ship should be placed vertical or horizontal
+    public static boolean shipPlacement(char[][] board,int xCord, int yCord, int shipLength, boolean checkVertical ) {
+        if (checkVertical) {                        // Check if the ship should be placed vertically
+            for (int i = 0; i < shipLength; i++) {  // Show placing a part of the ship at that position on the board
+                board[xCord + i][yCord] = '#';      // This part shows where boat is placed
+            }
+        } else {                                    // Check if the ship should be placed horizontally
+            for (int i = 0; i < shipLength; i++) {  // Show placing a part of the ship at that position on the board
+                board[xCord][yCord + i] = '#';      // This part shows where boat is placed
+            }
+        }
+        return true;                                // Return true indicating that placement of ship was successful
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // This is general method to check if area is valid for placing the ship that takes X and Y coordinates,
+    //// the length of the ship and boolean value to know if the ship is placed vertical or horizontally
+
+    public static boolean isAreaValid(char[][] board, int xCord, int yCord, int shipLength,boolean checkVertical) {         // Check if vertical placement of ship is needed
+        if(checkVertical) {                             // Check if placing the ship vertically does not make it go beyond the game board size
+            if (xCord + shipLength > coord) {
+                return false;                           // This happens if it is invalid area and goes beyond the size of the board and so it returns false
+            }
+            for (int i = 0; i < shipLength; i++) {      // Loop through each position along the vertical axis
+                if (board[xCord + i][yCord] != '~') {   // This is checking if the position has already been taken by another ship or not
+                    return false;                       // it is not a valid area on the board
+                }
+            }
+        }
+        else{       // Check if the ship should be placed horizontally
+            if(yCord + shipLength > coord) {            // Check if placing the ship horizontally does not make it go beyond the game board size
+                return false;                           // It is invalid area and goes beyond the size of the board
+            }
+
+            for (int i = 0; i < shipLength; i++) {      // Loop through each position along the horizontal axis
+                if (board[xCord][yCord + i] != '~')     // This is checking if the position has already been taken by another ship ot not
+                    return false;                       // it is not a valid area on the board
+            }
+        }
+        return true;                                    // It returns true if it passes all the checks, to indicate valid area for placing the ship
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // This is general method to print the board after both player and computer have placed their respective board
+    public static void printingBoard(char[][] playerCoords, char[][] compCoords) {
+        System.out.println("\n Player's Board    Computer's Board");      // Print headers for each Player's and Computers board
+        System.out.println("   12345678910        12345678910");                // Print the column label of the board on the TOP
+        for (int i = 0; i < coord; i++) {                                    // Loop through each row on the board
+            if(i < 9){                                                       // Adjust formatting for single-digit row numbers
+                System.out.print(" ");
+            }
+
+            System.out.print((i + 1) + "|");                                 // Print the current row along with the '|'
+
+            for (int j = 0; j < coord ; j++) {                                // Print each character from the players board for the current row
+                System.out.print(playerCoords[i][j]);
+            }
+
+            System.out.print("|"  +(i + 1));                    // This is a separator between current row number for the players board
+            if(i < 9){                                                       // Adjust formatting for single-digit row numbers on the computers board
+                System.out.print("    ");
+            } else {
+                System.out.print("   ");
+            }
+
+            if(i < 9){                                                       // Adjust formatting for single-digit row numbers on the computers board
+                System.out.print(" ");
+
+            }
+            System.out.print( (i + 1) + "|");                                 // Print the current row along with the '|'
+            for (int j = 0; j < coord; j++) {                                // Print each character from the computers board for the current row
+                System.out.print(compCoords[i][j]);
+            }
+            System.out.println("|" + (i + 1));                               // This is a separator between current row number for the computers board
+        }
+        System.out.println("   12345678910        12345678910");                 // This is printing the column label of the board on BOTTOM
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // This is main method where everything is being aligned and the game officially begins
+    public static void main(String[] args) {
+        System.out.println("Welcome to Battleship!");       // Print a welcome message for the user
+        System.out.println("   12345678910");                // display the initial empty board
+        System.out.println(" 1|~~~~~~~~~~|1");
+        System.out.println(" 2|~~~~~~~~~~|2");
+        System.out.println(" 3|~~~~~~~~~~|3");
+        System.out.println(" 4|~~~~~~~~~~|4");
+        System.out.println(" 5|~~~~~~~~~~|5");
+        System.out.println(" 6|~~~~~~~~~~|6");
+        System.out.println(" 7|~~~~~~~~~~|7");
+        System.out.println(" 8|~~~~~~~~~~|8");
+        System.out.println(" 9|~~~~~~~~~~|9");
+        System.out.println("10|~~~~~~~~~~|10");
+        System.out.println("   12345678910");
+
+
+        System.out.println();
+        // Create and initialize the game boards for player, computer and computer's ships
+        char[][] coordinates = new char[10][10];
+
+        Board(playerCoords);
+        Board(compCoords);
+        Board(compShip);
+
+        playShip();             // Now we call the method to allow the player to place their ships on the board
+        computerShip();         // And call another methods to allow the computer to randomly place its ships on the board
+
+        System.out.println("Get Ready, All Ships has been placed.Let's Start the Game");        // Indicate the start of the game after all ships are placed by both parties
+        while(playShipCount > 0 && hitShipsComp < shipLength.length){                           // Continue until all player ships are sunk or all computer ships are sunk
+            playerTurn();       //  Player takes a turn to hit the computer's ships
+            computersTurn();    //  Computer takes a turn to hit the player's ships
+            System.out.println(" Player's ship: " + playShipCount + "|" + "|Computer's ship:  " +(shipLength.length - hitShipsComp));       // Print the current status of ships for both player and computer
+            printingBoard(playerCoords,compCoords);
+        }
+        if(playShipCount <= 0) { // Print the final result of the game of who has won the game with no ships left
+            System.out.println("All your ship are sunk, Computer won");
+        }else{
+            System.out.println("You sunk all the computer's ships.You win!");
+
+        }
+    }
+
+}
